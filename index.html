@@ -373,6 +373,83 @@ My goal is to bridge the gap between brands and their audiences through creative
     window.onload = function() {
         showSection('work');
     };
+
+    // ===== Supabase-powered portfolio videos =====
+    // Replace these two values with your Supabase Project URL and anon/public key.
+    const SUPABASE_URL = 'https://ttmshuyngnvwqajheqws.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_FVOj-GeCVwemKrMhejZ0rQ_2TjbdNWC';
+
+    function getVideoEmbed(value) {
+        try {
+            const url = new URL(value);
+            if (url.protocol !== 'https:') return null;
+            const host = url.hostname.toLowerCase().replace(/^www\./, '');
+            if (host === 'youtu.be' || host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+                let id = host === 'youtu.be' ? url.pathname.split('/').filter(Boolean)[0] : url.searchParams.get('v');
+                if (!id) { const parts=url.pathname.split('/').filter(Boolean); const marker=parts.findIndex(part=>['embed','shorts','live'].includes(part)); if(marker>=0) id=parts[marker+1]; }
+                return id && /^[A-Za-z0-9_-]{6,}$/.test(id) ? {type:'youtube',src:`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`} : null;
+            }
+            if (host === 'facebook.com' || host === 'm.facebook.com' || host === 'fb.watch' || host === 'web.facebook.com') {
+                return {type:'facebook',src:`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url.href)}&show_text=false&width=560`};
+            }
+            return null;
+        } catch (_) { return null; }
+    }
+
+    async function loadPortfolioVideos() {
+        if (!window.supabase || SUPABASE_URL.startsWith('YOUR_') || SUPABASE_ANON_KEY.startsWith('YOUR_')) return;
+        try {
+            const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const { data, error } = await client
+                .from('portfolio_videos')
+                .select('id, title, youtube_url, category, sort_order')
+                .eq('is_published', true)
+                .order('sort_order', { ascending: true })
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+
+            const grid = document.getElementById('grid');
+            // Keep the existing Price List cards; replace only the hard-coded video cards.
+            grid.querySelectorAll('.card.video').forEach(card => card.remove());
+            const priceCard = grid.querySelector('.card.game');
+            const labels = {
+                event: 'Event & Wedding Video',
+                commercial: 'Commercial & Advertising',
+                online: 'Online & Social Media'
+            };
+            (data || []).forEach(item => {
+                const embed = getVideoEmbed(item.youtube_url);
+                if (!embed) return;
+                const card = document.createElement('div');
+                card.className = `card video video-${item.category}`;
+                const videoContainer = document.createElement('div');
+                videoContainer.className = 'video-container';
+                const iframe = document.createElement('iframe');
+                iframe.src = embed.src;
+                if (embed.type === 'facebook') iframe.allow = 'autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share';
+                iframe.title = item.title || 'Portfolio video';
+                iframe.loading = 'lazy';
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                iframe.allowFullscreen = true;
+                videoContainer.appendChild(iframe);
+                const info = document.createElement('div');
+                info.className = 'card-info';
+                const heading = document.createElement('h3');
+                heading.textContent = item.title || 'Untitled video';
+                const category = document.createElement('p');
+                category.textContent = `Video Editing / ${labels[item.category] || item.category}`;
+                info.append(heading, category);
+                card.append(videoContainer, info);
+                grid.insertBefore(card, priceCard || null);
+            });
+            filterSelection('all');
+        } catch (error) {
+            console.error('Could not load portfolio videos from Supabase:', error.message || error);
+            // If the backend is temporarily unavailable, the original sample videos remain visible.
+        }
+    }
+    window.addEventListener('load', loadPortfolioVideos);
+
 </script>
 </body>
 </html>
