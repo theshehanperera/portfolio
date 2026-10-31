@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Admin | Shehan Perera</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#050505;--panel:#111;--line:#242424;--muted:#888;--green:#00ff88;--white:#fff}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif}
+    .wrap{max-width:1050px;margin:0 auto;padding:34px 20px 70px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+    h1{font-size:clamp(1.6rem,4vw,2.2rem);margin:0;letter-spacing:-1px}.muted{color:var(--muted)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin:18px 0}
+    h2{font-size:1.1rem;margin:0 0 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:7px}.wide{grid-column:1/-1}label{font-size:.83rem;color:#bbb}
+    input,select{width:100%;background:#080808;border:1px solid #303030;border-radius:9px;padding:12px;color:white;font:inherit;outline:none}input:focus,select:focus{border-color:var(--green)}
+    button,.button{border:0;border-radius:9px;padding:11px 16px;background:var(--green);color:#000;font:700 .9rem inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    button.secondary{background:#202020;color:#eee;border:1px solid #333}button.danger{background:#351515;color:#ffb4b4;border:1px solid #542222}button:disabled{opacity:.5;cursor:not-allowed}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.hidden{display:none!important}.message{padding:12px 14px;border-radius:9px;background:#171717;border:1px solid #333;color:#ddd;margin:14px 0;white-space:pre-wrap}.message.error{border-color:#743333;color:#ffbcbc}.message.success{border-color:#286143;color:#aaffc9}
+    .video-list{display:grid;gap:10px}.video-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#0b0b0b}.video-row h3{font-size:.95rem;margin:0 0 6px}.video-row p{font-size:.78rem;color:var(--muted);margin:0}.row-actions{display:flex;gap:7px;flex-shrink:0}.status{font-size:.72rem;padding:4px 8px;border-radius:30px;background:#173222;color:#9dffc2;margin-left:6px}.status.off{background:#302020;color:#ffb5b5}
+    .check{display:flex;align-items:center;gap:9px;color:#bbb;font-size:.88rem}.check input{width:auto;accent-color:var(--green)}.hint{font-size:.78rem;color:#777;line-height:1.6}
+    @media(max-width:650px){.wrap{padding:24px 14px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.video-row{align-items:flex-start;flex-direction:column}.row-actions{width:100%}.row-actions button{flex:1}.top{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><h1>Portfolio Admin</h1><div class="muted" style="margin-top:6px">Shehan Perera · Video Management</div></div><a class="button secondary" href="./index.html">View Portfolio ↗</a></div>
+  <div id="message" class="message hidden" role="status"></div>
+  <section id="loginPanel" class="panel">
+    <h2>Admin Login</h2>
+    <form id="loginForm" class="grid">
+      <div class="field wide"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field wide"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <div class="wide actions"><button type="submit">Log In</button></div>
+    </form>
+    <p class="hint">Admin accounts are created securely in the Supabase Dashboard. Public sign-up is intentionally disabled on this page.</p>
+  </section>
+
+  <div id="adminArea" class="hidden">
+    <div class="top"><div class="muted" id="signedInAs"></div><button id="logoutBtn" class="secondary" type="button">Log Out</button></div>
+    <section class="panel">
+      <h2 id="formTitle">Add New Video</h2>
+      <form id="videoForm">
+        <input id="videoId" type="hidden">
+        <div class="grid">
+          <div class="field wide"><label for="title">Video Title</label><input id="title" maxlength="120" placeholder="e.g. Commercial Video 03" required></div>
+          <div class="field wide"><label for="youtubeUrl">YouTube / Facebook Video URL</label><input id="youtubeUrl" type="url" placeholder="YouTube හෝ Facebook video link එක paste කරන්න" required></div>
+          <div class="field"><label for="category">Category</label><select id="category" required><option value="event">Event & Wedding Video</option><option value="commercial">Commercial & Advertising Video</option><option value="online">Online & Social Media Video</option></select></div>
+          <div class="field"><label for="sortOrder">Display order (smaller number appears first)</label><input id="sortOrder" type="number" value="0" min="0" step="1"></div>
+          <div class="wide"><label class="check"><input id="published" type="checkbox" checked> Published (show on public portfolio)</label></div>
+        </div>
+        <div class="actions"><button id="saveBtn" type="submit">Add Video</button><button id="cancelEdit" class="secondary hidden" type="button">Cancel Edit</button></div>
+      </form>
+      <p class="hint">Paste a YouTube video / Shorts / youtu.be link හෝ Public Facebook video / reel / post link එකක්. වීඩියෝව අදාළ platform එකෙන් embed වෙනවා; මේ වෙබ් අඩවියට upload වෙන්නේ නැහැ. Facebook වීඩියෝව Public විය යුතුයි.</p>
+    </section>
+    <section class="panel"><h2>Manage Videos <span id="videoCount" class="muted"></span></h2><div id="videoList" class="video-list"></div></section>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Add your Supabase Project URL and anon/public key here (same values as index.html).
+  const SUPABASE_URL = 'https://ttmshuyngnvwqajheqws.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_FVOj-GeCVwemKrMhejZ0rQ_2TjbdNWC';
+  const $ = id => document.getElementById(id);
+  let supabaseClient = null;
+  let currentUser = null;
+  const categoryNames = {event:'Event & Wedding Video',commercial:'Commercial & Advertising Video',online:'Online & Social Media Video'};
+
+  function showMessage(message, type='') {
+    const box=$('message'); box.textContent=message; box.className='message'+(type?' '+type:'');
+  }
+  function clearMessage(){ $('message').className='message hidden'; $('message').textContent=''; }
+  function isSupportedVideoUrl(value){
+    try{
+      const u=new URL(value); if(u.protocol!=='https:') return false;
+      const host=u.hostname.toLowerCase().replace(/^www\./,'');
+      if(['youtu.be','youtube.com','m.youtube.com','youtube-nocookie.com'].includes(host)){
+        let id=host==='youtu.be'?u.pathname.split('/').filter(Boolean)[0]:u.searchParams.get('v');
+        if(!id){const p=u.pathname.split('/').filter(Boolean);const i=p.findIndex(x=>['embed','shorts','live'].includes(x));if(i>=0)id=p[i+1];}
+        return !!id && /^[A-Za-z0-9_-]{6,}$/.test(id);
+      }
+      return ['facebook.com','m.facebook.com','fb.watch','web.facebook.com'].includes(host);
+    }catch(e){return false;}
+  }
+  function resetForm(){ $('videoForm').reset();$('videoId').value='';$('sortOrder').value='0';$('published').checked=true;$('formTitle').textContent='Add New Video';$('saveBtn').textContent='Add Video';$('cancelEdit').classList.add('hidden'); }
+  async function verifyAdmin(user){
+    const {data,error}=await supabaseClient.from('portfolio_admins').select('user_id').eq('user_id',user.id).maybeSingle();
+    if(error) throw error; return !!data;
+  }
+  async function refreshVideos(){
+    const {data,error}=await supabaseClient.from('portfolio_videos').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+    if(error) throw error;
+    $('videoCount').textContent=`(${data.length})`;
+    const list=$('videoList');list.replaceChildren();
+    if(!data.length){const p=document.createElement('p');p.className='muted';p.textContent='No videos added yet.';list.appendChild(p);return;}
+    data.forEach(item=>{
+      const row=document.createElement('div');row.className='video-row';
+      const details=document.createElement('div');
+      const h=document.createElement('h3');h.textContent=item.title;
+      const p=document.createElement('p');p.textContent=`${categoryNames[item.category]||item.category} · Order ${item.sort_order}`;
+      const status=document.createElement('span');status.className='status'+(item.is_published?'':' off');status.textContent=item.is_published?'Published':'Draft';h.appendChild(status);details.append(h,p);
+      const actions=document.createElement('div');actions.className='row-actions';
+      const edit=document.createElement('button');edit.className='secondary';edit.textContent='Edit';edit.type='button';edit.addEventListener('click',()=>editVideo(item));
+      const del=document.createElement('button');del.className='danger';del.textContent='Delete';del.type='button';del.addEventListener('click',()=>deleteVideo(item));
+      actions.append(edit,del);row.append(details,actions);list.appendChild(row);
+    });
+  }
+  function editVideo(item){
+    $('videoId').value=item.id;$('title').value=item.title;$('youtubeUrl').value=item.youtube_url;$('category').value=item.category;$('sortOrder').value=item.sort_order;$('published').checked=item.is_published;
+    $('formTitle').textContent='Edit Video';$('saveBtn').textContent='Save Changes';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});
+  }
+  async function deleteVideo(item){
+    if(!confirm(`Delete "${item.title}"? This cannot be undone.`))return;
+    clearMessage();const {error}=await supabaseClient.from('portfolio_videos').delete().eq('id',item.id);
+    if(error){showMessage(error.message,'error');return;}showMessage('Video deleted.','success');await refreshVideos();
+  }
+  async function enterAdmin(user){
+    currentUser=user;
+    try{
+      const allowed=await verifyAdmin(user);
+      if(!allowed){await supabaseClient.auth.signOut();$('adminArea').classList.add('hidden');$('loginPanel').classList.remove('hidden');showMessage('This account is not an authorized portfolio admin.','error');return;}
+      $('loginPanel').classList.add('hidden');$('adminArea').classList.remove('hidden');$('signedInAs').textContent=`Signed in as ${user.email}`;clearMessage();await refreshVideos();
+    }catch(error){showMessage('Admin verification failed. Check that the SQL setup has been completed. '+error.message,'error');}
+  }
+  async function init(){
+    if(SUPABASE_URL.startsWith('YOUR_')||SUPABASE_ANON_KEY.startsWith('YOUR_')){showMessage('Setup required: add your Supabase Project URL and anon/public key in admin.html and index.html.','error');return;}
+    supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(session?.user) await enterAdmin(session.user);
+  }
+  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();clearMessage();const {data,error}=await supabaseClient.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)showMessage(error.message,'error');else if(data.user)await enterAdmin(data.user);});
+  $('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();resetForm();showMessage('You have been logged out.','success');});
+  $('cancelEdit').addEventListener('click',resetForm);
+  $('videoForm').addEventListener('submit',async e=>{
+    e.preventDefault();clearMessage();const url=$('youtubeUrl').value.trim();
+    if(!isSupportedVideoUrl(url)){showMessage('Please enter a valid HTTPS YouTube or Facebook video URL.','error');return;}
+    const payload={title:$('title').value.trim(),youtube_url:url,category:$('category').value,sort_order:Math.max(0,Number($('sortOrder').value)||0),is_published:$('published').checked};
+    const id=$('videoId').value;$('saveBtn').disabled=true;
+    const result=id?await supabaseClient.from('portfolio_videos').update(payload).eq('id',id):await supabaseClient.from('portfolio_videos').insert(payload);
+    $('saveBtn').disabled=false;
+    if(result.error){showMessage(result.error.message,'error');return;}
+    showMessage(id?'Video updated successfully.':'Video added successfully.','success');resetForm();await refreshVideos();
+  });
+  init();
+</script>
+</body></html>
